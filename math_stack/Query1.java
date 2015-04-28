@@ -15,6 +15,7 @@ import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.Tool;
@@ -128,8 +129,10 @@ public class Query1 extends Configured implements Tool {
       OUTPUT_PATH = OUTPUT_PATH + String.valueOf(randomNum);
       
       Configuration conf = getConf();
-      Job job = new Job(conf, "Query1");
+      conf.setInt(MRJobConfig.NUM_MAPS, 10);
+      conf.setInt(MRJobConfig.NUM_REDUCES, 4);
       
+      Job job = new Job(conf, "Query1");
       job.setJarByClass(Query1.class);
       job.setJobName("Math Stack Query1");
       
@@ -153,6 +156,9 @@ public class Query1 extends Configured implements Tool {
       job.waitForCompletion(true);
       
       Configuration conf2 = getConf();
+      conf2.setInt(MRJobConfig.NUM_MAPS, 10);
+      conf2.setInt(MRJobConfig.NUM_REDUCES, 4);
+      
       Job job2 = new Job(conf2, "Query1-2");
       job2.setJarByClass(Query1.class);
 

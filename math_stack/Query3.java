@@ -9,6 +9,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -17,6 +19,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -26,7 +29,6 @@ import org.apache.hadoop.util.ToolRunner;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 
 public class Query3 extends Configured implements Tool {
@@ -69,8 +71,8 @@ public class Query3 extends Configured implements Tool {
       }
    }
  
-   public static class QueryReducer extends Reducer<Text, Text, Text, Text>{
-    
+   public static class QueryReducer extends Reducer<Text, Text, Text, Text> {
+      
       public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
          JSONArray arr = new JSONArray();
          JSONParser parser = new JSONParser();
@@ -83,7 +85,7 @@ public class Query3 extends Configured implements Tool {
                arr.add(val);
             } catch (Exception e) {
                // TODO Auto-generated catch block
-               System.out.println(value.toString());
+               //_log.error("\n\n" + key + " " + value.toString() + "\n\n");
                e.printStackTrace();
             }
             
@@ -95,15 +97,18 @@ public class Query3 extends Configured implements Tool {
    
    public static class QueryMapper2 extends Mapper<LongWritable, Text, Text, IntWritable>{
       
+      private static final Log _log = LogFactory.getLog(QueryReducer.class);
+      
       @Override
       public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
          String line = value.toString();
          Configuration conf = context.getConfiguration();
          String year_param = conf.get("year");
+         String temp1 = "";
+         String temp = "";
          
          try {
             String[] parts = line.split("\t");
-            String temp = "";
             JSONParser parser = new JSONParser();
             JSONObject json_obj;
             String input_key = parts[0];
@@ -113,11 +118,9 @@ public class Query3 extends Configured implements Tool {
             json_arr = (JSONArray) parser.parse(arr_str);
             Iterator itr = json_arr.iterator();
             int tags_count = 0;
-            String temp1 = "";
-            System.out.println("##############################################################");
+            
             while (itr.hasNext()) {
-               temp1 = itr.next().toString();
-               System.out.println(temp1);
+               temp = itr.next().toString();
                json_obj = (JSONObject) parser.parse(temp);
                
                if(json_obj.containsKey("tags")) {
@@ -140,10 +143,11 @@ public class Query3 extends Configured implements Tool {
                }
             }
             
-            Iterator<JSONArray> itr2 = json_arr.iterator();
+            Iterator itr2 = json_arr.iterator();
             
             while (itr2.hasNext()) {
-               json_obj = (JSONObject) parser.parse(itr2.next().toString());
+               temp1 = itr2.next().toString();
+               json_obj = (JSONObject) parser.parse(temp1);
                if(json_obj.containsKey("count")) {
                   String creation_date_text = (String) json_obj.get("date");
                   DateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -160,7 +164,7 @@ public class Query3 extends Configured implements Tool {
                }
             }
          } catch (Exception e) {
-            // TODO Auto-generated catch block
+            _log.error("\n\n" + temp1 + "\n\n");
             e.printStackTrace();
          }
       }  
@@ -191,24 +195,23 @@ public class Query3 extends Configured implements Tool {
    
    @SuppressWarnings("deprecation")
    public int run(String[] args) throws Exception {
-      Random rand = new Random();
-      int randomNum = rand.nextInt((1000 - 1) + 1) + 1;
-      OUTPUT_PATH = OUTPUT_PATH + String.valueOf(randomNum);
+      OUTPUT_PATH = OUTPUT_PATH + args[1];
       
       Configuration conf = getConf();
-      
+      conf.setInt(MRJobConfig.NUM_MAPS, 10);
+      conf.setInt(MRJobConfig.NUM_REDUCES, 4);
       
       Job job = new Job(conf, "Query3");
       
       job.setJarByClass(Query3.class);
-      job.setJobName("Math Stack Query3");
+      job.setJobName("Q3-J1 " + args[1]);
       
       job.setMapperClass(QueryMapper.class);
-      job.setCombinerClass(QueryReducer.class);
+      //job.setCombinerClass(QueryReducer.class);
       job.setReducerClass(QueryReducer.class);
       
       job.setMapOutputKeyClass(Text.class);
-      job.setMapOutputValueClass(Text.class);
+      job.setMapOutputValueClass(IntWritable.class);
 
       job.setOutputKeyClass(Text.class);
       job.setOutputValueClass(Text.class);
@@ -220,12 +223,15 @@ public class Query3 extends Configured implements Tool {
       
       // =======================================
       
-     /* Configuration conf2 = getConf();
+      Configuration conf2 = getConf();
+      conf2.setInt(MRJobConfig.NUM_MAPS, 10);
+      conf2.setInt(MRJobConfig.NUM_REDUCES, 4);
       conf2.set("year", args[2]);
       
       Job job2 = new Job(conf2, "Query3-2");
       job2.setJarByClass(Query3.class);
-
+      
+      job2.setJobName("Q3-J2 " + args[1]);
       job2.setMapperClass(QueryMapper2.class);
       //job2.setCombinerClass(QueryReducer2.class);
       //job2.setReducerClass(QueryReducer2.class);
@@ -233,8 +239,8 @@ public class Query3 extends Configured implements Tool {
       job2.setMapOutputKeyClass(Text.class);
       job2.setMapOutputValueClass(Text.class);
 
-      job2.setOutputKeyClass(Text.class);
-      job2.setOutputValueClass(IntWritable.class);
+      //job2.setOutputKeyClass(Text.class);
+      //job2.setOutputValueClass(IntWritable.class);
       
       //job2.setPartitionerClass(KeyPartitioner.class);
       //job2.setGroupingComparatorClass(KeyGroupingComparator.class);
@@ -243,7 +249,8 @@ public class Query3 extends Configured implements Tool {
       TextInputFormat.addInputPath(job2, new Path(OUTPUT_PATH));
       TextOutputFormat.setOutputPath(job2, new Path(args[1]));
       
-      return job2.waitForCompletion(true) ? 0 : 1; */
+      job2.waitForCompletion(true);
+      
       return 0;
    }
 }

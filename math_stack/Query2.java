@@ -16,6 +16,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -133,6 +134,9 @@ public class Query2 extends Configured implements Tool {
       
       Configuration conf = getConf();
       conf.set("year", args[2]);
+      conf.setInt(MRJobConfig.NUM_MAPS, 10);
+      conf.setInt(MRJobConfig.NUM_REDUCES, 4);
+      
       Job job = new Job(conf, "Query2");
       
       job.setJarByClass(Query2.class);
@@ -156,6 +160,8 @@ public class Query2 extends Configured implements Tool {
       // =======================================
       
       Configuration conf2 = getConf();
+      conf2.setInt(MRJobConfig.NUM_MAPS, 10);
+      conf2.setInt(MRJobConfig.NUM_REDUCES, 4);
       
       Job job2 = new Job(conf2, "Query2-2");
       job2.setJarByClass(Query2.class);
