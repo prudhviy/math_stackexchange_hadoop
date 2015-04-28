@@ -82,9 +82,9 @@ public class Query3 extends Configured implements Tool {
          for (Text value: values) {
             try {
                JSONObject val;
-               _log.error("\n\n" + key + " " + value.toString() + "\n\n");
+               //_log.error("\n\n" + key + " " + value.toString() + "\n\n");
                val = (JSONObject) parser.parse(value.toString());
-               System.out.println("\n ################## \n");
+               //System.out.println("\n ################## \n");
                arr.add(val);
             } catch (Exception e) {
                // TODO Auto-generated catch block
@@ -146,7 +146,7 @@ public class Query3 extends Configured implements Tool {
             }
             
             Iterator itr2 = json_arr.iterator();
-            _log.error("\n\n TEJA: \n\n");
+            
             while (itr2.hasNext()) {
                temp1 = itr2.next().toString();
                json_obj = (JSONObject) parser.parse(temp1);
@@ -220,12 +220,12 @@ public class Query3 extends Configured implements Tool {
       job.setOutputValueClass(Text.class);
       
       TextInputFormat.addInputPath(job, new Path(args[0]));
-      TextOutputFormat.setOutputPath(job, new Path(args[1]));
+      TextOutputFormat.setOutputPath(job, new Path(OUTPUT_PATH));
       
       job.waitForCompletion(true);
       
       // =======================================
-    /*  
+      
       Configuration conf2 = getConf();
       conf2.setInt(MRJobConfig.NUM_MAPS, 10);
       conf2.setInt(MRJobConfig.NUM_REDUCES, 4);
@@ -239,8 +239,8 @@ public class Query3 extends Configured implements Tool {
       //job2.setCombinerClass(QueryReducer2.class);
       job2.setReducerClass(QueryReducer2.class);
       
-      job2.setMapOutputKeyClass(Text.class);
-      job2.setMapOutputValueClass(IntWritable.class);
+      //job2.setMapOutputKeyClass(Text.class);
+      //job2.setMapOutputValueClass(IntWritable.class);
 
       job2.setOutputKeyClass(Text.class);
       job2.setOutputValueClass(IntWritable.class);
@@ -253,7 +253,7 @@ public class Query3 extends Configured implements Tool {
       TextOutputFormat.setOutputPath(job2, new Path(args[1]));
       
       job2.waitForCompletion(true);
-      */
+      
       return 0;
    }
 }
